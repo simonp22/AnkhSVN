@@ -25,7 +25,7 @@
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
                     ConfigurationOverrideFile = ""
-                    DefineConstants = "DEBUG;TRACE;REPORTERROR"
+                    DefineConstants = "DEBUG;TRACE;REPORTERROR;VS2002;ALWAYSREGISTER"
                     DocumentationFile = ""
                     DebugSymbols = "true"
                     FileAlignment = "4096"
@@ -43,9 +43,9 @@
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
                     ConfigurationOverrideFile = ""
-                    DefineConstants = "TRACE"
+                    DefineConstants = "TRACE;VS2002;REPORTERROR;ALWAYSREGISTER"
                     DocumentationFile = ""
-                    DebugSymbols = "false"
+                    DebugSymbols = "true"
                     FileAlignment = "4096"
                     IncrementalBuild = "true"
                     Optimize = "true"
@@ -114,11 +114,6 @@
                     Project = "{E31A3F36-D1C5-4FC2-8530-D24B9E01B09E}"
                     Package = "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"
                     Private = "True"
-                />
-                <Reference
-                    Name = "Microsoft.VisualStudio.VCProjectEngine"
-                    AssemblyName = "Microsoft.VisualStudio.VCProjectEngine"
-                    HintPath = "I:\Program Files\Microsoft Visual Studio .NET\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll"
                 />
                 <Reference
                     Name = "Ankh.UI"
@@ -319,6 +314,11 @@
                     BuildAction = "Compile"
                 />
                 <File
+                    RelPath = "Commands\ShowRepositoryExplorerCommand.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
                     RelPath = "Commands\SwitchItemCommand.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
@@ -395,11 +395,6 @@
                 />
                 <File
                     RelPath = "Extenders\ResourceExtender.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Extenders\TestExtender.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

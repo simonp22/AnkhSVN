@@ -8,7 +8,7 @@
 //	/// <summary>
 //	/// Summary description for CopyItem.
 //	/// </summary>
-//    [VSNetCommand("CopyItem", Text = "Send", Tooltip = "Commits an item"),
+//    [VSNetCommand("CopyItem", Text = "GC Collect", Tooltip = "Commits an item"),
 //    VSNetControl( "Tools", Position = 2 )]
 //	internal class CopyItem : CommandBase
 //	{
@@ -21,7 +21,7 @@
 //
 //        public override void Execute(Ankh.AnkhContext context)
 //        {
-//            //ErrorMessage.SendByMail( "arild.fines@broadpark.no", "hei", "halloe" );
+//            GC.Collect();
 //        
 //        }
 //    }

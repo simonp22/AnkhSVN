@@ -28,7 +28,7 @@
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
                     ConfigurationOverrideFile = ""
-                    DefineConstants = "DEBUG;TRACE;REPORTERROR;ALWAYSREGISTER"
+                    DefineConstants = "DEBUG;TRACE;REPORTERROR;ALWAYSREGISTER;VS2003"
                     DocumentationFile = ""
                     DebugSymbols = "true"
                     FileAlignment = "4096"
@@ -48,7 +48,7 @@
                     BaseAddress = "285212672"
                     CheckForOverflowUnderflow = "false"
                     ConfigurationOverrideFile = ""
-                    DefineConstants = "TRACE"
+                    DefineConstants = "TRACE;VS2003"
                     DocumentationFile = ""
                     DebugSymbols = "false"
                     FileAlignment = "4096"
@@ -128,12 +128,6 @@
                     Name = "extensibility"
                     AssemblyName = "Extensibility"
                     HintPath = "I:\Program Files\Microsoft Visual Studio .NET 2003\Common7\IDE\PublicAssemblies\extensibility.dll"
-                    AssemblyFolderKey = "hklm\publicassemblies"
-                />
-                <Reference
-                    Name = "Microsoft.VisualStudio.VCProjectEngine"
-                    AssemblyName = "Microsoft.VisualStudio.VCProjectEngine"
-                    HintPath = "I:\Program Files\Microsoft Visual Studio .NET 2003\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.VCProjectEngine.dll"
                     AssemblyFolderKey = "hklm\publicassemblies"
                 />
                 <Reference

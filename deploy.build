@@ -5,10 +5,12 @@
     <property name="deploy.dir" value="deploy"/>
     <property name="checkout.dir" value="Ankh-Release" />
     <property name="zip.file" value="Ankh.zip" />
+    <property name="vs.2003" value="false"/>
     <property name="major.version" value="0" />
-    <property name="minor.version" value="1" />
+    <property name="minor.version" value="2" />
+    <property name="patch.version" value="0" />
     <property name="url" 
-        value="http://arild.no-ip.com:8088/svn/finalproject/branches/alpha1-release/src"/>
+        value="http://arild.no-ip.com:8088/svn/finalproject/trunk/src"/>
         
    
     
@@ -55,7 +57,7 @@
                   revision = int.Parse( first );
                
                return project.ExpandProperties( 
-                    "${major.version}.${minor.version}.42." + revision, location );
+                    "${major.version}.${minor.version}.${patch.version}." + revision, location );
             }
             
             public static void ScriptMain( Project project )
@@ -113,8 +115,18 @@
         
     </target>
     
+    <target name="msi" depends="source">
+        <!--<nant buildfile="${checkout.dir}\master.build" inheritall="true" target="rebuild,msi"/>
+        
+        <copy todir="${deploy.dir}">
+            <fileset basedir="${checkout.dir}\installsource">
+                <includes name="*.msi"/>
+            </fileset>
+        </copy>-->
     
-    <target name="msi" depends="svndir, source"> 
+    
+            
+    
         <property name="config" value="Debug" if="${debug}"/>
         <property name="config" value="Release" unless="${debug}" />
         
@@ -122,7 +134,7 @@
             commandline="${checkout.dir}\src.sln /build ${config} /project AnkhSetup"
             verbose="${verbose}">
             <environment>
-                <option name="SVNSRC" value="${svn.dir}"/>                   
+                <option name="SVNSRC" value="${svn.dir}"/>                    
             </environment>
         </exec>
         <copy todir="${deploy.dir}">

@@ -11,7 +11,7 @@ namespace Ankh
     /// <summary>
     /// Encapsulates error handling functionality.
     /// </summary>
-    public class Error
+    internal class Error
     {
         private Error()
         {
@@ -28,7 +28,7 @@ namespace Ankh
             if ( ex is WorkingCopyLockedException )
             {
                 MessageBox.Show( "Your working copy appear to be locked. " + NL + 
-                    "Run svn cleanup to amend the situation.", 
+                    "Run Cleanup to amend the situation.", 
                     "Working copy locked", MessageBoxButtons.OK, 
                     MessageBoxIcon.Warning );
             }
