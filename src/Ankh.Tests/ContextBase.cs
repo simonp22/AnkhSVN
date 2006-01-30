@@ -175,7 +175,7 @@ namespace Ankh.Tests
             }
         }
 
-        public virtual void SolutionOpened()
+        public virtual void EnableAnkhForLoadedSolution()
         {
             // TODO:  Add ContextBase.SolutionOpened implementation
         }
@@ -274,7 +274,16 @@ namespace Ankh.Tests
             }
 
             #endregion
-        }
+
+            #region IErrorHandler Members
+
+            public void LogException( Exception exception, string message, params object[] args )
+            {
+                throw new Exception( "The method or operation is not implemented." );
+            }
+
+            #endregion
+}
 
         /// <summary>
         /// An ISynchronizeInvoke for which InvokeRequired will always return false.
@@ -562,5 +571,19 @@ namespace Ankh.Tests
         private ConfigLoader configLoader;
         private VSCommandBars commandBars;
         private Control control;
-    }
+
+        #region IContext Members
+
+        public IServiceProvider ServiceProvider
+        {
+            get { throw new Exception( "The method or operation is not implemented." ); }
+        }
+
+        bool IContext.EnableAnkhForLoadedSolution()
+        {
+            throw new Exception( "The method or operation is not implemented." );
+        }
+
+        #endregion
+}
 }

@@ -2,14 +2,15 @@ using System;
 using System.IO;
 using Utils;
 using NUnit.Framework;
+using TestUtils;
 
 namespace NSvn.Core.Tests
 {
-	/// <summary>
-	/// Summary description for ExceptionTest.
-	/// </summary>
-	public class ExceptionTest : TestBase
-	{
+    /// <summary>
+    /// Summary description for ExceptionTest.
+    /// </summary>
+    public class ExceptionTest : TestBase
+    {
         [SetUp]
         public override void SetUp()
         {
@@ -77,5 +78,5 @@ namespace NSvn.Core.Tests
             }
         }
 
-	}
+    }
 }

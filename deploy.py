@@ -7,10 +7,10 @@ ANKHSVN_ROOT = "http://rogue/svn/finalproject/trunk"
 ANKHSVN = "%s/src" % ANKHSVN_ROOT
 
 # version numbers to put in the filename
-MAJOR, MINOR, PATCH, LABEL = 0, 6, 0, "snapshot_20"
+MAJOR, MINOR, PATCH, LABEL = 0, 6, 0, "snapshot_22"
 
 # The URL of the Subversion version
-SUBVERSION = "http://svn.collab.net/repos/svn/tags/1.2.3/"
+SUBVERSION = "http://svn.collab.net/repos/svn/tags/1.3.0-rc2/"
 SUBVERSION_VERSION="1.2.3"
 subversion_dir=""
 
@@ -61,7 +61,7 @@ APR_ICONV_VERSION="0.9.6"
 USE_NANT = 1
 
 
-TMP = "T:\\"
+TMP = "D:\\tmp\\"
 
 # setting CONFIG to the special value "__ALL__" will cause both Debug and Release to be built
 CONFIG = "Release"
@@ -387,8 +387,8 @@ def do_subversion():
     run ("python %s %s" % (gen_make, opts) )
 
     # make sure our built subversion lets us set the admin dir
-    print "Patching the Subversion source to allow us to set the admin dir"
-    run ( "patch -p0 --input ..\\src\NSvn.Core\\admindir.patch" )
+    #print "Patching the Subversion source to allow us to set the admin dir"
+    #run ( "patch -p0 --input ..\\src\NSvn.Core\\admindir.patch" )
     
     "Building Subversion"
     if CONFIG == "__ALL__":

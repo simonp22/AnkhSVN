@@ -12,6 +12,7 @@ using System.Threading;
 using Utils;
 using Utils.Win32;
 using System.Text;
+using TestUtils;
 
 namespace NSvn.Core.Tests
 {
@@ -52,6 +53,11 @@ namespace NSvn.Core.Tests
             {
                 // swallow 
             }
+            finally
+            {
+                if(this.client != null)
+                    this.client.LogMessage -= new LogMessageDelegate(LogMessage);
+            }
         }
         /// <summary>
         /// extract our test repository
@@ -66,8 +72,8 @@ namespace NSvn.Core.Tests
         public static string ExtractRepos( string resourceName, string path, Type type )
         {
             //already exists?
-            if ( Directory.Exists( path ) )
-                Directory.Delete( path, true );
+            if (Directory.Exists(path))
+                PathUtils.RecursiveDelete(path);
 
             Zip.ExtractZipResource(path, type, resourceName );
             string reposUrl = "file://" + 
@@ -285,7 +291,6 @@ namespace NSvn.Core.Tests
         /// Rename the administrative subdirectories if necessary.
         /// </summary>
         /// <param name="path"></param>
-        [Conditional("ALT_ADMIN_DIR")]
         protected void RenameAdminDirs( string path )
         {
             string adminDir = Path.Combine( path, TRAD_WC_ADMIN_DIR );

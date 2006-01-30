@@ -84,15 +84,10 @@ namespace Ankh
                 Debug.AutoFlush = true;
             }
 #endif
-            ErrorHandler handler = new ErrorHandler( ((_DTE)application).Version );
             try
             {
-                
-                
                 this.context = new AnkhContext( (_DTE)application, (AddIn)addInInst,
-                    new UIShell(), handler );
-                
-
+                    new UIShell() );
                 Extenders.ExtenderProvider.Register( this.context );
 
 #if ALWAYSREGISTER
@@ -111,7 +106,7 @@ namespace Ankh
                 // is there already a solution open? 
                 // can happen if we are loaded after startup
                 if ( this.context.DTE.Solution.IsOpen )
-                    this.context.SolutionOpened();
+                    this.context.EnableAnkhForLoadedSolution();
   
                 
             }

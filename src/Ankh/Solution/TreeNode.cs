@@ -41,19 +41,25 @@ namespace Ankh.Solution
         public static TreeNode CreateNode( UIHierarchyItem item, IntPtr hItem,
             Explorer explorer, TreeNode parent )
         {
-
-			// what kind of node is this?
-			if ( item.Object is Project )
-			{
-                return new ProjectNode( item, hItem, explorer, parent, (Project)item.Object );
+            Project project = item.Object as Project;
+            // what kind of node is this?
+            if ( project != null )
+            {
+                switch (project.Kind)
+                {
+                    case DteUtils.SolutionItemsKind:
+                        return new SolutionFolderNode(item, hItem, explorer, parent, project);
+                    default:
+                        return new ProjectNode(item, hItem, explorer, parent, project);
+                }
             }
             else if ( item.Object is ProjectItem )
             {
-				ProjectItem projectItem = item.Object as ProjectItem;
+                ProjectItem projectItem = item.Object as ProjectItem;
                 // Check if we have a subproject inside an Enterprise Template project
-                if ( projectItem.Kind == ETPROJITEMKIND && 
+                if ( projectItem.Kind == DteUtils.EnterpriseTemplateProjectItemKind && 
                     parent.uiItem.Object is Project &&
-                    ((Project)parent.uiItem.Object).Kind == ETPROJKIND )
+                    ((Project)parent.uiItem.Object).Kind == DteUtils.EnterpriseTemplateProjectKind )
                 {
                     return new ProjectNode( item, hItem, explorer, parent, projectItem.SubProject );
                 }
@@ -68,12 +74,11 @@ namespace Ankh.Solution
             }
             else if ( parent is SolutionNode ) //deal with unmodeled projects (database)
             {
-                for(int i=1; i<=item.DTE.Solution.Projects.Count; i++)
+                foreach(Project p in Enumerators.EnumerateProjects(explorer.DTE))
                 {
-                    Project project=item.DTE.Solution.Projects.Item(i);
-                    if(project.Name==item.Name)
+                    if(p.Name==item.Name)
                     {
-                        return new ProjectNode( item, hItem, explorer, parent, project );
+                        return new ProjectNode( item, hItem, explorer, parent, p );
                     }
                 }
             }
@@ -86,11 +91,11 @@ namespace Ankh.Solution
             else if ( parent is ProjectItemNode ) //deal with sub items in unmodeled projects
             {
                 ProjectItemNode parentNode=(ProjectItemNode)parent;
-				if(parentNode.ParsedItem!=null)
-				{
-					ParsedSolutionItem parsedItem=parentNode.ParsedItem.GetChild(item.Name);
-					return new ProjectItemNode( item, hItem, explorer, parent, parsedItem );  
-				}
+                if ( parentNode.ParsedItem != null )
+                {
+                    ParsedSolutionItem parsedItem = parentNode.ParsedItem.GetChild( item.Name );
+                    return new ProjectItemNode( item, hItem, explorer, parent, parsedItem );
+                }
             }
 
             return null;
@@ -127,7 +132,9 @@ namespace Ankh.Solution
             {                  
                 if ( rescan )
                 {
-                    this.explorer.Context.StatusCache.Status( this.Directory );                    
+                    if (this.Directory != null && this.Directory.Length > 0)
+                        this.explorer.Context.StatusCache.Status(this.Directory);
+
                     this.FindChildren( );
                     this.RescanHook();
                 }
@@ -161,6 +168,7 @@ namespace Ankh.Solution
             statusMap[ NodeStatusKind.Normal ]      = 1;
             statusMap[ NodeStatusKind.Added ]       = 2;
             statusMap[ NodeStatusKind.Deleted ]     = 3;
+            statusMap[ NodeStatusKind.Replaced ]    = 4;
             statusMap[ NodeStatusKind.IndividualStatusesConflicting ] = 7;
             statusMap[ NodeStatusKind.Conflicted ]  = 6;
             statusMap[ NodeStatusKind.Unversioned ] = 8;
@@ -527,6 +535,7 @@ namespace Ankh.Solution
             Unversioned = StatusKind.Unversioned,
             Modified = StatusKind.Modified,
             Ignored = StatusKind.Ignored,
+            Replaced = StatusKind.Replaced,
             IndividualStatusesConflicting
         }
 
@@ -537,7 +546,5 @@ namespace Ankh.Solution
         private Explorer explorer;
         private NodeStatus currentStatus;
         private static readonly IDictionary statusMap = new Hashtable();
-        private const string ETPROJKIND = "{7D353B21-6E36-11D2-B35A-0000F81F0C06}";
-        private const string ETPROJITEMKIND = "{EA6618E8-6E24-4528-94BE-6889FE16485C}";
     }
 }

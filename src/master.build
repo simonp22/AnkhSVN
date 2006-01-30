@@ -92,6 +92,15 @@
         <delete dir="build-Debug" verbose="${verbose}" failonerror="false" />
     </target>
     
+    <target name="build-TestUtils">
+        <nant buildfile="TestUtils/TestUtils.build" inheritall="true" target="build"/>
+        <copy todir="${build.dir}"> 
+            <fileset basedir="TestUtils/${build.dir}">
+                <include name="*.dll"/>
+                <include name="*.pdb"/>
+            </fileset>
+         </copy>
+    </target>
     
      <target name="build-Utils">
         <nant buildfile="Utils/Utils.build" inheritall="true" target="build"/>
@@ -245,7 +254,7 @@
         
     </target>
     
-    <target name="build-tests" depends="build, build-Ankh.Tests, build-NSvn.Core.Tests, build-NSvn.Core.Tests.MCpp, build-Utils.Tests"
+    <target name="build-tests" depends="build, build-TestUtils, build-Ankh.Tests, build-NSvn.Core.Tests, build-NSvn.Core.Tests.MCpp, build-Utils.Tests"
         description="Build all test assemblies"/>
     
     
@@ -258,9 +267,12 @@
         <nunit2 failonerror="true" haltonfailure="false">
             <formatter type="Plain" />
             <formatter type="Xml" usefile="true" outputdir="${build.dir}" extension=".xml" />
-                <test haltonfailure="false" assemblyname="${build.dir}/NSvn.Core.Tests.dll"/>
-                <test haltonfailure="false" assemblyname="${build.dir}/Ankh.Tests.dll"/>
-                <test haltonfailure="false" assemblyname="${build.dir}/Utils.Tests.dll"/>
+            <test haltonfailure="false" assemblyname="${build.dir}/NSvn.Core.Tests.dll"/>
+            <test haltonfailure="false" assemblyname="${build.dir}/NSvn.Core.Tests.MCpp.dll"/>
+
+            <!-- Ankh.Tests is disabled until we find a way to close VS after each test. -->
+            <!--<test haltonfailure="false" assemblyname="${build.dir}/Ankh.Tests.dll"/>-->
+            <test haltonfailure="false" assemblyname="${build.dir}/Utils.Tests.dll"/>
         </nunit2>
 
         <!-- Use this XmlPeek hack to make sure all tests run even if there are errors in the first test -->
@@ -366,13 +378,8 @@
                 
                 project.Log(Level.Info, "Detected AboutBoxText: {0}", text);
                 
-                string headerText = "#ifndef CustomDetails_\r\n";
-                headerText += "#define CustomDetails_\r\n";
-                headerText += "const TCHAR* ABOUTBOXDETAILS = _T(\"";
-                headerText += text.Replace("\r\n", "\\r\\n");
-                headerText += "\");\r\n";
-                headerText += "#endif";
-                project.Properties.Add( "AboutBoxDetails", headerText );
+                string aboutBoxDetails = text.Trim();
+                project.Properties.Add("AboutBoxDetails", aboutBoxDetails);
             }
             ]]></code>
         </script>

@@ -46,6 +46,7 @@
     <RemoveIntegerChecks>false</RemoveIntegerChecks>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -313,9 +314,6 @@
     <Compile Include="Commands\RelocateCommand.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Commands\RenameFileCommand.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Commands\ResolveConflictCommand.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -378,6 +376,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DteUtils.cs" />
+    <Compile Include="Enumerators.cs" />
     <Compile Include="ErrorHandler.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -390,6 +389,7 @@
     <Compile Include="EventSinks\EventSink.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="EventSinks\HierarchyEventsSink.cs" />
     <Compile Include="EventSinks\ItemEventSink.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -405,9 +405,12 @@
     <Compile Include="EventSinks\SolutionEventsSink.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="EventSinks\TrackProjectEventsSink.cs" />
     <Compile Include="EventSinks\VCProjectEventSink.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Solution\SolutionFolderNode.cs" />
+    <Compile Include="VSInterfaces.cs" />
     <Compile Include="Extenders\ExtenderProvider.cs">
       <SubType>Code</SubType>
     </Compile>

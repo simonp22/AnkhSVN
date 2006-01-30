@@ -73,7 +73,17 @@ namespace Ankh
         ///          /// </summary>
         public void RemoveAllTaskItems()
         {
-            Window win =  this.context.DTE.Windows.Item(Constants.vsWindowKindTaskList);
+            Window win;
+            try
+            {
+                win = this.context.DTE.Windows.Item(Constants.vsWindowKindTaskList);
+            }
+            catch(ArgumentException)
+            {
+                // Swallow (this occurs on VS2005 RTM shutdown)
+                return;
+            }
+
             TaskList taskList = (TaskList) win.Object;
             foreach(TaskItem item in taskList.TaskItems)
             {
@@ -112,11 +122,6 @@ namespace Ankh
             //object o = null;
             Window win = this.context.DTE.Windows.Item(Constants.vsWindowKindTaskList);
             win.Activate();
-            // doesn't work - doesn't set filter to just show conflicts :(
-            // win.DTE.Commands.Raise("{4A9B7E50-AA16-11D0-A8C5-00A0C921A4D2}", 678, ref o, ref o) ;
-            // set to all since we can't filter it to just conflicts
-                win.DTE.ExecuteCommand("View.ALL", "");
-
         }
 
         /// <summary>

@@ -31,7 +31,6 @@
         <csc target="library" output="${build.dir}/Utils.dll" verbose="${verbose}" 
             define="${define}" debug="${debug}">
             <references>
-                <include name="${lib.dir}\Sharpziplib.dll"/>
                 <include name="${lib.dir}\Microsoft.mshtml.dll"/>
                 <include name="${lib.dir}\stdole.dll"/>
             </references>

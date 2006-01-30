@@ -7,7 +7,6 @@
 
 
 
-#include "Status.h"
 #include "Revision.h"
 #include "CommitInfo.h"
 #include "DirectoryEntry.h"
@@ -33,8 +32,6 @@
 #include "ClientContext.h"
 #include <windows.h>
 #include <stdlib.h>
-
-#include "Status.h"
 
 //TODO: clean up includes in general(not just here)
 
@@ -107,18 +104,17 @@ NSvn::Core::AuthenticationBaton* NSvn::Core::Client::get_AuthBaton()
 // Retrieve the name of the administrative subdirectory.
 String* NSvn::Core::Client::get_AdminDirectoryName()
 {
-	Pool pool;
-	return Utf8ToString( SVN_WC_ADM_DIR_NAME, pool );
+    Pool pool;
+    return Utf8ToString( svn_wc_get_adm_dir(pool), pool );
 }
-#if defined(ALT_ADMIN_DIR)
+
 // Set the name of the administative subdirectory.
-// This functionality depends on a specially compiled Subversion.
 void NSvn::Core::Client::set_AdminDirectoryName( String* name )
 {
-	Pool pool;
-    svn_wc_set_adm_dir_name( StringToUtf8( name, pool ) );
+    Pool pool;
+    svn_wc_set_adm_dir( StringToUtf8( name, pool ), pool );
 }
-#endif
+
 
 // implementation of Client::Add
 void NSvn::Core::Client::Add( String* path, bool recursive )
@@ -129,7 +125,7 @@ void NSvn::Core::Client::Add( String* path, bool recursive )
 // implementation of Client::Add
 void NSvn::Core::Client::Add( String* path, bool recursive, bool force )
 {
-    SubPool pool(*(this->rootPool));;
+    SubPool pool(*(this->rootPool));
 
     const char* truePath = CanonicalizePath( path, pool );
     HandleError( svn_client_add2( truePath, recursive, force, this->context->ToSvnContext(), pool ) );
@@ -686,16 +682,22 @@ void NSvn::Core::Client::Diff( String* diffOptions[], String* path1, Revision* r
     AprFileAdapter* outAdapter = new AprFileAdapter(outfile, pool);
     AprFileAdapter* errAdapter = new AprFileAdapter(errfile, pool);
     apr_file_t* aprOut = outAdapter->Start();
-    apr_file_t* aprErr = errAdapter->Start();    
+    apr_file_t* aprErr = errAdapter->Start();
+
+    try
+    {
 
     HandleError( svn_client_diff2( diffOptArray, truePath1, 
         revision1->ToSvnOptRevision( pool ), truePath2, 
         revision2->ToSvnOptRevision(pool), recurse, ignoreAncestry, noDiffDeleted,
         ignoreContentType,
         aprOut, aprErr, this->context->ToSvnContext(), pool ) );
-
-    apr_file_close( aprOut );
-    apr_file_close( aprErr );
+    }
+    __finally
+    {
+        apr_file_close( aprOut );
+        apr_file_close( aprErr );
+    }
 
     outAdapter->WaitForExit();
     errAdapter->WaitForExit();

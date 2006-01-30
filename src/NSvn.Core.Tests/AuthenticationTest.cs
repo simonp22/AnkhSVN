@@ -87,8 +87,11 @@ namespace NSvn.Core.Tests
             {
                 process.CloseMainWindow();
                 System.Threading.Thread.Sleep( 500 );
-                if ( !process.HasExited )
+                if (!process.HasExited)
+                {
                     process.Kill();
+                    process.WaitForExit();
+                }
             }
         }
 
@@ -198,6 +201,6 @@ namespace NSvn.Core.Tests
         private SslFailures acceptedFailures = 0;
         private bool maySave = false;
         private bool callbackCalled = false;
-        private const string SSLTESTREPOS=@"https://ankhsvn.com/svn/test";
+        private const string SSLTESTREPOS=@"https://svn.d-90.nl/svn/test";
     }
 }
