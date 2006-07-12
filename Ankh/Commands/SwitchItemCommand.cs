@@ -49,15 +49,13 @@ namespace Ankh.Commands
                 return;
 
             context.StartOperation( "Switching" );
-            context.ProjectFileWatcher.StartWatchingForChanges();
             try
             {
                 SwitchRunner runner = new SwitchRunner(info.Path, info.SwitchToUrl, 
                     info.RevisionStart, info.Recurse );
-                context.UIShell.RunWithProgressDialog( runner, "Switching" );
-                if ( !context.ReloadSolutionIfNecessary() )
+                using ( ProjectFileWatcherScope scope = new ProjectFileWatcherScope(context) )
                 {
-                    context.SolutionExplorer.RefreshSelection();
+                    context.UIShell.RunWithProgressDialog( runner, "Switching" ); 
                 }
             }
             finally

@@ -8,6 +8,10 @@ using EnvDTE;
 using System.Threading;
 
 using Timer = System.Threading.Timer;
+using IOleServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
+using Microsoft.VisualStudio.Shell.Interop;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Ankh
 {
@@ -34,35 +38,34 @@ namespace Ankh
     /// <summary>
     /// Watches files.
     /// </summary>
-    public class FileWatcher
+    public class FileWatcher : IFileWatcher
     {
         /// <summary>
         /// A project file is modified.
         /// </summary>
         public event FileModifiedDelegate FileModified;
 
-        public FileWatcher( Client client )
+        public FileWatcher( IContext context )
         {
-            client.Notification += new NotificationDelegate(this.OnNotification);
-            this.projectWatchers = new ArrayList();
+            context.Client.Notification += new NotificationDelegate(this.OnNotification);
+            this.cookieList = new ArrayList();
 
-            // set up the polling
-            this.timer = new Timer( new TimerCallback( this.DoPoll ), null, 
-                0, PollingInterval );
+            this.AdviseFileChangeEvents( context.ServiceProvider );
         }
 
-        public void StartWatchingForChanges()
+        private void AdviseFileChangeEvents( IOleServiceProvider provider )
         {
-            this.dirty = false;
-        }
+            // Get the VS file change tracking service.
+            Guid serviceGuid = typeof(SVsFileChangeEx).GUID;
+            Guid interfaceGuid = typeof(IVsFileChangeEx).GUID;
 
-        /// <summary>
-        /// Whether any projects have been modified since the last time 
-        /// the watcher was reset.
-        /// </summary>
-        public bool HasDirtyFiles
-        {
-            get{ return this.dirty; }
+            IntPtr ptr;
+            provider.QueryService( ref serviceGuid, ref interfaceGuid, out ptr );
+
+            this.fileChangeService = (IVsFileChangeEx) Marshal.GetObjectForIUnknown( ptr );
+
+            // this is our event sink
+            this.fileChangeEvents = new FileChangeEvents( this );
         }
 
         /// <summary>
@@ -71,14 +74,13 @@ namespace Ankh
         /// <param name="path"></param>
         public void AddFile( string path )
         {
-            lock( this.projectWatchers )
-            {
-                if ( File.Exists( path ) )
-                {
-                    Watcher w = new Watcher( path, this );
-                    this.projectWatchers.Add( w );
-                }
-            }
+            uint cookie;
+            this.fileChangeService.AdviseFileChange( path,
+                (uint)( _VSFILECHANGEFLAGS.VSFILECHG_Size | _VSFILECHANGEFLAGS.VSFILECHG_Time | _VSFILECHANGEFLAGS.VSFILECHG_Del ),
+                this.fileChangeEvents, out cookie );
+
+            // need to keep track of this so we can unsubscribe later
+            this.cookieList.Add( cookie );
         }
 
         /// <summary>
@@ -86,24 +88,20 @@ namespace Ankh
         /// </summary>
         public void Clear()
         {
-            lock( this.projectWatchers )
+            Debug.WriteLine( "Clearing watched files, # of cookies is " + this.cookieList.Count, "Ankh" );
+
+            foreach ( uint cookie in this.cookieList )
             {
-                this.projectWatchers.Clear();
+                this.fileChangeService.UnadviseFileChange( cookie );
             }
-            this.dirty = false;
         }
 
-        /// <summary>
-        /// Resets the object
-        /// </summary>
-        public void Reset()
+        private void RaiseChangedEvent( string file )
         {
-            this.dirty = false;
-        }
-
-        public void ForcePoll()
-        {
-            this.DoPoll( null );
+            if ( this.FileModified != null )
+            {
+                this.FileModified( this, new FileModifiedEventArgs(file) );
+            }
         }
 
         /// <summary>
@@ -115,10 +113,11 @@ namespace Ankh
         {
             if ( IsChanged( args.ContentState ) || args.Action == NotifyAction.Revert )
             {
-                if ( this.IsWatchee( args.Path ) )
-                    this.dirty = true;
+                RaiseChangedEvent( args.Path );
             }
         }
+
+
 
         /// <summary>
         /// Whether a NotifyState indicates a change to an item.
@@ -132,102 +131,35 @@ namespace Ankh
                 state == NotifyState.Merged;
         }
 
-        /// <summary>
-        /// Whether a given path is being watched.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        private bool IsWatchee( string path )
+        private class FileChangeEvents : IVsFileChangeEvents
         {
-            lock( this.projectWatchers )
-            {
-                foreach( Watcher w in this.projectWatchers )
-                {
-                    if ( PathUtils.NormalizePath(w.FilePath) == PathUtils.NormalizePath(path) )
-                        return true;
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Timer callback. Performs the polling of the watchers.
-        /// </summary>
-        /// <param name="state"></param>
-        private void DoPoll( object state )
-        {
-            lock( this.projectWatchers )
-            {
-                ArrayList toRemove = new ArrayList();
-
-                foreach ( Watcher w in this.projectWatchers )
-                {
-                    try
-                    {
-                        w.Poll();
-                    }
-                    catch ( Exception )
-                    {
-                        toRemove.Add( w );
-                    }
-                }
-
-                foreach ( Watcher w in toRemove )
-                {
-                    this.projectWatchers.Remove( w );
-                }
-            }
-        }
-
-        #region class Watcher
-        private class Watcher 
-        {
-            public Watcher( string path, FileWatcher parent )
+            public FileChangeEvents( FileWatcher parent )
             {
                 this.parent = parent;
-                this.path = path;    
-                this.lastWriteTime = File.GetLastWriteTime( this.path );
             }
 
-            /// <summary>
-            /// The path of this watcher.
-            /// </summary>
-            public string FilePath
+            public int DirectoryChanged( string pszDirectory )
             {
-                get{ return this.path; }
+                return VSConstants.S_OK;
             }
-            
 
-            /// <summary>
-            /// Checks the last access time of this watcher.
-            /// </summary>
-            public void Poll()
+            public int FilesChanged( uint cChanges, string[] rgpszFile, uint[] rggrfChange )
             {
-                DateTime now = File.GetLastWriteTime( this.path );
-                if ( now - this.lastWriteTime > Delta )
-                {                    
-                    if ( this.parent.FileModified != null )
-                    {
-                        FileModifiedEventArgs projArgs = new 
-                            FileModifiedEventArgs(this.path);
-                        this.parent.FileModified( this.parent, projArgs );
-                    }
-
-                    this.lastWriteTime = now;
+                foreach ( string file in rgpszFile )
+                {
+                    this.parent.RaiseChangedEvent( file );
                 }
+
+                return VSConstants.S_OK;
             }
 
             private FileWatcher parent;
-            private DateTime lastWriteTime;
-            private string path;
-            private static readonly TimeSpan Delta = new TimeSpan(0,0,1);
-            
         }
-        #endregion
+       
+        private ArrayList cookieList;
+        private IVsFileChangeEx fileChangeService;
+        private IVsFileChangeEvents fileChangeEvents;
 
-        private ArrayList projectWatchers;
-        private bool dirty;
-        private Timer timer;
-        private const long PollingInterval = 1000;
+       
     }
 }

@@ -50,19 +50,13 @@ namespace Ankh.Commands
                     if ( dlg.ShowDialog( context.HostWindow ) != DialogResult.OK )
                         return;
 
-                    context.ProjectFileWatcher.StartWatchingForChanges();
-               
                     ReverseMergeRunner runner = new ReverseMergeRunner(
                         dlg.CheckedItems, dlg.Revision, dlg.Recursive ? Recurse.Full : Recurse.None,
                         dlg.DryRun );
-                    context.UIShell.RunWithProgressDialog( runner, "Merging" );
 
-                    // we need to refresh every item, not just those selected since 
-                    // the operation might be recursive
-                    if ( !context.ReloadSolutionIfNecessary() )
+                    using ( ProjectFileWatcherScope scope = new ProjectFileWatcherScope(context) )
                     {
-                        foreach( SvnItem item in resources )
-                            item.Refresh( context.Client);
+                        context.UIShell.RunWithProgressDialog( runner, "Merging" ); 
                     }
                 }
             }

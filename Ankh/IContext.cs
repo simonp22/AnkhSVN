@@ -104,11 +104,6 @@ namespace Ankh
         ConflictManager ConflictManager { get; }
 
         /// <summary>
-        /// Watches the project files.
-        /// </summary>
-        FileWatcher ProjectFileWatcher{ get; }
-
-        /// <summary>
         /// Wrapper over the VS command bar model.
         /// </summary>
         VSCommandBars CommandBars{ get; }
@@ -143,5 +138,10 @@ namespace Ankh
         /// Miscellaneous cleanup stuff goes here.
         /// </summary>
         void Shutdown();
+
+        /// <summary>
+        /// The filewatcher service.
+        /// </summary>
+        IFileWatcher FileWatcher { get; }
     }
 }

@@ -76,21 +76,17 @@ namespace Ankh.Commands
             }
                
             // perform the actual revert 
-            context.OutputPane.StartActionText("Reverting");  
-            context.ProjectFileWatcher.StartWatchingForChanges(); 
-            try
+            context.OutputPane.StartActionText("Reverting");
+            using ( ProjectFileWatcherScope scope = new ProjectFileWatcherScope(context) )
             {
-                context.Client.Revert( paths, recurse );
-            }
-            catch( NotVersionControlledException )
-            {
-                // empty
-            }
-
-            if ( !context.ReloadSolutionIfNecessary() )
-            {
-                foreach( SvnItem item in resources )
-                    item.Refresh( context.Client );
+                try
+                {
+                    context.Client.Revert( paths, recurse );
+                }
+                catch ( NotVersionControlledException )
+                {
+                    // empty
+                }
             }
 
             context.OutputPane.EndActionText();

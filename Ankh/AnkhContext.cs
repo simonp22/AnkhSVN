@@ -45,7 +45,7 @@ namespace Ankh
 
             this.LoadConfig();
 
-            this.projectFileWatcher = new FileWatcher(this.client);
+            this.fileWatcher = new FileWatcher(this);
 
             this.outputPane = new OutputPaneWriter( dte, "AnkhSVN" );
             this.solutionExplorer = new Solution.Explorer( this.dte, this);
@@ -247,10 +247,10 @@ namespace Ankh
         /// <summary>
         /// Watches the project and solution files.
         /// </summary>
-        public FileWatcher ProjectFileWatcher
+        public IFileWatcher FileWatcher
         {
             [System.Diagnostics.DebuggerStepThrough]
-            get{ return this.projectFileWatcher; }
+            get{ return this.fileWatcher; }
         }
 
         public VSCommandBars CommandBars
@@ -305,7 +305,7 @@ namespace Ankh
         /// <returns>True if the solution has been reloaded.</returns>
         public bool ReloadSolutionIfNecessary()
         {
-            if ( this.projectFileWatcher.HasDirtyFiles && !this.Config.DisableSolutionReload )
+            if ( !this.Config.DisableSolutionReload )
             {
                 if ( MessageBox.Show( this.HostWindow, 
                     "One or more of your project files have changed as a result of a " + 
@@ -412,8 +412,7 @@ namespace Ankh
 
                 Utils.DebugTimer timer = DebugTimer.Start();
 
-
-                this.statusCache = new StatusCache( this.Client );
+                this.statusCache = new StatusCache( this );
 
                 this.solutionExplorer.Load();
 
@@ -624,7 +623,7 @@ namespace Ankh
         private ConflictManager conflictManager; 
         private IErrorHandler errorHandler;
 
-        private FileWatcher projectFileWatcher;
+        private IFileWatcher fileWatcher;
 
         private ProgressDialog progressDialog;
         private SvnClient client;

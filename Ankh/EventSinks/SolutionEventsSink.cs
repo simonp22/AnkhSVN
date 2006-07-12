@@ -212,8 +212,6 @@ namespace Ankh.EventSinks
             this.eventSinks = new ArrayList();
 
             this.eventSinks.Add( new TrackProjectDocumentsEventSink( this.Context ) );
-            this.eventSinks.Add( new ProjectFilesEventSink( this.Context ) );
-            this.eventSinks.Add( new DocumentEventsSink( this.Context ) );
             this.eventSinks.Add( new CommandsEventSink( this.Context ) );
         }
 

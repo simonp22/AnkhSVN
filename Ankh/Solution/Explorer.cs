@@ -58,7 +58,6 @@ namespace Ankh.Solution
         public void Load()
         {           
             this.Unload();
-            this.context.ProjectFileWatcher.AddFile( this.DTE.Solution.FullName );
             this.SetUpTreeview();
             this.SyncAll();
 
@@ -90,7 +89,7 @@ namespace Ankh.Solution
                     originalImageList = IntPtr.Zero;
                 }
             }
-            this.context.ProjectFileWatcher.Clear();
+            this.context.FileWatcher.Clear();
             this.solutionNode = null;
         }    
 
@@ -99,7 +98,6 @@ namespace Ankh.Solution
         /// </summary>
         public void RefreshSelectionParents()
         {
-            this.ForcePoll();
 
             foreach( UIHierarchyItem item in (Array)this.UIHierarchy.SelectedItems )
             {
@@ -126,7 +124,6 @@ namespace Ankh.Solution
         /// <param name="project"></param>
         public void Refresh( Project project )
         {
-            this.ForcePoll();
 
             TreeNode node = this.GetNode( project );
             if ( node != null )
@@ -140,8 +137,6 @@ namespace Ankh.Solution
         /// </summary>
         public void RefreshSelection()
         {
-            this.ForcePoll();
-
             foreach( UIHierarchyItem item in (Array)this.UIHierarchy.SelectedItems )
             {
                 TreeNode node = this.GetNode( item );
@@ -158,8 +153,6 @@ namespace Ankh.Solution
         /// <param name="item"></param>
         public void Refresh( ProjectItem item )
         {
-            this.ForcePoll();
-
             TreeNode node = (TreeNode)this.projectItems[item];
             if ( node != null )
             {
@@ -227,8 +220,6 @@ namespace Ankh.Solution
 
 
             // make sure everything's up to date.
-            this.ForcePoll();
-
             SolutionLoadStrategy.GetStrategy( dte.Version ).Load( this );     
  
             Debug.WriteLine( "Created solution node", "Ankh" );
@@ -265,8 +256,6 @@ namespace Ankh.Solution
         /// <param name="visitor"></param>         
         public void VisitSelectedNodes( INodeVisitor visitor )         
         {
-            this.ForcePoll();
-
             //foreach( SelectedItem item in items )         
             object o = this.UIHierarchy.SelectedItems;         
             foreach( UIHierarchyItem item in (Array)this.UIHierarchy.SelectedItems )         
@@ -292,8 +281,6 @@ namespace Ankh.Solution
         public IList GetSelectionResources( bool getChildItems, 
             ResourceFilterCallback filter )
         {
-            this.ForcePoll();
-
             ArrayList list = new ArrayList();
 
             object o = this.UIHierarchy.SelectedItems;         
@@ -318,8 +305,6 @@ namespace Ankh.Solution
             if ( !context.AnkhLoadedForSolution )
                 return new SvnItem[]{};
 
-            this.ForcePoll();
-
             ArrayList list = new ArrayList();
 
             TreeNode node = solutionNode;     
@@ -337,8 +322,6 @@ namespace Ankh.Solution
         /// <returns></returns>
         public IList GetItemResources( ProjectItem item, bool recursive )
         {
-            this.ForcePoll();
-
             ArrayList list = new ArrayList();
 
             TreeNode node = this.GetNode(item);
@@ -558,10 +541,6 @@ namespace Ankh.Solution
         internal void AddResource( object key, ProjectNode node, string projectFile )
         {
             this.projects[key] = node;
-            if ( projectFile != null && projectFile.Trim() != String.Empty )
-            {
-                this.context.ProjectFileWatcher.AddFile( projectFile );
-            }
         }
 
         /// <summary>
@@ -617,14 +596,6 @@ namespace Ankh.Solution
                 return ((TreeNode)this.projects[project]);
             else
                 return null;
-        }
-
-        /// <summary>
-        /// Forces a poll of all project files.
-        /// </summary>
-        private void ForcePoll()
-        {
-            this.context.ProjectFileWatcher.ForcePoll();
         }
 
         private void ProjectRefreshCallback( object state )

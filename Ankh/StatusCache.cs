@@ -6,6 +6,10 @@ using System.IO;
 using System.Diagnostics;
 using Utils;
 
+using IServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
+using Microsoft.VisualStudio.Shell.Interop;
+using System.Runtime.InteropServices;
+
 namespace Ankh
 {
     /// <summary>
@@ -13,12 +17,17 @@ namespace Ankh
     /// </summary>
     public class StatusCache
     {
-        public StatusCache( Client client )
+        public StatusCache( IContext context )
         {
-            this.client = client;
+            this.client = context.Client;
+            this.fileWatcher = context.FileWatcher;
+            this.fileWatcher.FileModified += new FileModifiedDelegate(OnFileModified);
+
             this.table = new Hashtable();
             this.deletions = new Hashtable();
         }
+
+        
 
         /// <summary>
         /// Fill the cache by running status recursively on this directory.
@@ -68,7 +77,7 @@ namespace Ankh
             get
             {
                 string normPath = PathUtils.NormalizePath(path, this.currentPath);
-                SvnItem item = (SvnItem)this.table[normPath];
+                SvnItem item = this.table[normPath] as SvnItem;
 
                 if ( item == null )
                 {
@@ -84,8 +93,13 @@ namespace Ankh
                     if ( Directory.Exists( directory ) )
                         this.Status( directory, false );
 
-                    Status status = this.client.SingleStatus( normPath );
-                    this.table[normPath] = item = new SvnItem( path, status );
+                    // the item should now be in the cache
+                    item = this.table[ normPath ] as SvnItem;
+                    if ( item == null )
+                    {
+                        Status status = this.client.SingleStatus( normPath );
+                        this.table[ normPath ] = item = new SvnItem( path, status );
+                    }
                 }
                 else
                 {
@@ -137,8 +151,6 @@ namespace Ankh
                 return new SvnItem[]{};
         }
 
-      
-
         /// <summary>
         /// Status callback.
         /// </summary>
@@ -156,7 +168,8 @@ namespace Ankh
             if ( existingItem != null && existingItem != SvnItem.Unversionable )
                 existingItem.Refresh( status );
             else
-                this.table[ normPath ] = new SvnItem( path, status );
+                this.AddNewItem( normPath, status );
+                
 
             if ( status.TextStatus == StatusKind.Deleted )
             {
@@ -176,6 +189,42 @@ namespace Ankh
                 this.deletions[ containingDir ] = list;
             }
         }
+
+        private void AddNewItem( string path, Status status )
+        {
+            SvnItem item = new SvnItem( path, status );
+            this.table[ path ] = item;
+
+            if ( item.IsFile )
+            {
+                this.fileWatcher.AddFile( path );
+            }
+            else
+            {
+                // nothing
+            }
+        }
+
+        private void OnFileModified( object sender, FileModifiedEventArgs args )
+        {
+            this.Refresh( args.Filename );
+        }
+
+        
+
+        private void Refresh( string file )
+        {
+            string normPath = PathUtils.NormalizePath( file );
+            SvnItem item = this.table[ normPath ] as SvnItem;
+            if ( item != null )
+            {
+                item.Refresh( this.client );
+            }
+        }
+
+
+
+       
 
         //private void DeletedItemChanged(object sender, EventArgs e)
         //{
@@ -246,6 +295,7 @@ namespace Ankh
         private Hashtable table;
         private Client client;
         private string currentPath;
+        private IFileWatcher fileWatcher;
 
 
 #if DEBUG

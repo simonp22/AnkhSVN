@@ -52,14 +52,13 @@ namespace Ankh.Commands
                     return;
 
                 // run the actual update on another thread
-                context.ProjectFileWatcher.StartWatchingForChanges();
-                bool completed = context.UIShell.RunWithProgressDialog( runner, "Updating" );
-
-                // this *must* happen on the primary thread.
-                if ( completed )
+                using ( ProjectFileWatcherScope scope = new ProjectFileWatcherScope( context ) )
                 {
-                    if ( !context.ReloadSolutionIfNecessary() )
-                        context.SolutionExplorer.RefreshSelection();
+                    bool completed = context.UIShell.RunWithProgressDialog( runner, "Updating" );
+                    if ( !completed )
+                    {
+                        scope.Abandon();
+                    }
                 }
             }
             finally

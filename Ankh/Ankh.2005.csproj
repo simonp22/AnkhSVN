@@ -408,7 +408,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="EventSinks\TrackProjectEventsSink.cs" />
+    <Compile Include="IFileWatcher.cs" />
     <Compile Include="NoProjectAutomationObjectException.cs" />
+    <Compile Include="ProjectFileWatcherScope.cs" />
     <Compile Include="Solution\SolutionFolderNode.cs" />
     <Compile Include="VSInterfaces.cs" />
     <Compile Include="Extenders\ExtenderProvider.cs">
