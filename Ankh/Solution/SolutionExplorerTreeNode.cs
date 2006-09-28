@@ -300,6 +300,8 @@ namespace Ankh.Solution
                             childNode.Changed += new EventHandler(this.ChildOrResourceChanged);
                             this.Children.Add( childNode );
                             childNode.Refresh( false );
+
+                            this.explorer.AddResource( childNode.hItem, childNode );
                         }
                     }
 

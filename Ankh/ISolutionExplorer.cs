@@ -17,7 +17,7 @@ namespace Ankh
         /// Updates the status of the given item.
         /// </summary>
         /// <param name="item"></param>
-        void Refresh( ProjectItem item );
+        //void Refresh( ProjectItem item );
 
         /// <summary>
         /// Removes the project from Ankh's control.
@@ -31,7 +31,7 @@ namespace Ankh
         /// <param name="item"></param>
         /// <param name="recursive"></param>
         /// <returns></returns>
-        IList GetItemResources( ProjectItem item, bool recursive );
+        //IList GetItemResources( ProjectItem item, bool recursive );
 
         /// <summary>	 	
         /// Visits all the selected nodes.	 	
@@ -43,7 +43,7 @@ namespace Ankh
         /// Returns the selected ProjectItem
         /// </summary>
         /// <returns></returns>
-        ProjectItem GetSelectedProjectItem();
+        //ProjectItem GetSelectedProjectItem();
 
         /// <summary>
         /// Notify the Solution Explorer to unload.

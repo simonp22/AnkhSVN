@@ -70,6 +70,11 @@ namespace Ankh.Solution
                 Constants.TVGN_NEXT, item );
         }
 
+        public IntPtr GetSelectedItem()
+        {
+            return (IntPtr) Win32.SendMessage( this.hwnd, Msg.TVM_GETNEXTITEM, Constants.TVGN_CARET, IntPtr.Zero );
+        }
+
         public bool RenameInProgress
         {
             get

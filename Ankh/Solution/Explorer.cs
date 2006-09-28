@@ -32,9 +32,8 @@ namespace Ankh.Solution
         {
             this.dte = dte;
             this.context = context;
-            this.projectItems = new Hashtable( new ItemHashCodeProvider( context ), 
-                new ItemComparer() );
-            this.projects = new Hashtable( new ProjectHashCodeProvider(this), new ProjectComparer() );
+            this.nodes = new Hashtable();
+            this.projects = new Hashtable();
             
             // get the uihierarchy root
             this.solutionNode = null;
@@ -72,8 +71,7 @@ namespace Ankh.Solution
         public void Unload()
         {
             Debug.WriteLine( "Unloading existing solution information", "Ankh" );
-            this.projectItems.Clear();
-            this.projects.Clear();
+            this.nodes.Clear();
 
             // make sure to use the field, not the property
             // the property will always create a TreeView and will never return null
@@ -100,20 +98,18 @@ namespace Ankh.Solution
         public void RefreshSelectionParents()
         {
             this.ForcePoll();
+            IntPtr hItem = this.treeView.GetSelectedItem();
 
-            foreach( UIHierarchyItem item in (Array)this.UIHierarchy.SelectedItems )
+            SolutionExplorerTreeNode node = this.nodes[hItem] as SolutionExplorerTreeNode;
+            if ( node != null )
             {
-                SolutionExplorerTreeNode node = this.GetNode( item );
-                if ( node != null )
+                if ( node == this.solutionNode )
                 {
-                    if ( node == this.solutionNode )
-                    {
-                        this.RefreshNode( node );
-                    }
-                    else
-                    {
-                        this.RefreshNode( node.SolutionExplorerParent );
-                    }
+                    this.RefreshNode( node );
+                }
+                else
+                {
+                    this.RefreshNode( node.SolutionExplorerParent );
                 }
             }
         }
@@ -126,13 +122,13 @@ namespace Ankh.Solution
         /// <param name="project"></param>
         public void Refresh( Project project )
         {
-            this.ForcePoll();
+            //this.ForcePoll();
 
-            SolutionExplorerTreeNode node = this.GetNode( project );
-            if ( node != null )
-            {
-                this.RefreshNode( node );
-            }
+            //SolutionExplorerTreeNode node = this.GetNode( project );
+            //if ( node != null )
+            //{
+            //    this.RefreshNode( node );
+            //}
         }
 
         /// <summary>
@@ -142,30 +138,29 @@ namespace Ankh.Solution
         {
             this.ForcePoll();
 
-            foreach( UIHierarchyItem item in (Array)this.UIHierarchy.SelectedItems )
-            {
-                SolutionExplorerTreeNode node = this.GetNode( item );
-                if ( node != null )
-                {
-                    this.RefreshNode( node );
-                }
-            }
-        }
+            IntPtr hItem = this.treeView.GetSelectedItem();
 
-        /// <summary>
-        /// Updates the status of the given item.
-        /// </summary>
-        /// <param name="item"></param>
-        public void Refresh( ProjectItem item )
-        {
-            this.ForcePoll();
-
-            SolutionExplorerTreeNode node = (SolutionExplorerTreeNode)this.projectItems[item];
+            SolutionExplorerTreeNode node = this.nodes[ hItem ] as SolutionExplorerTreeNode;
             if ( node != null )
             {
                 this.RefreshNode( node );
             }
         }
+
+        ///// <summary>
+        ///// Updates the status of the given item.
+        ///// </summary>
+        ///// <param name="item"></param>
+        //public void Refresh( ProjectItem item )
+        //{
+        //    this.ForcePoll();
+
+        //    SolutionExplorerTreeNode node = (SolutionExplorerTreeNode)this.projectItems[item];
+        //    if ( node != null )
+        //    {
+        //        this.RefreshNode( node );
+        //    }
+        //}
 
         public void RemoveProject( Project project )
         {
@@ -214,7 +209,7 @@ namespace Ankh.Solution
             // build the whole tree anew
             Debug.WriteLine( "Synchronizing with treeview", "Ankh" );
 
-            this.projectItems.Clear();
+            this.nodes.Clear();
             this.projects.Clear();
             
             // store the original image list (check that we're not storing our own statusImageList
@@ -265,16 +260,14 @@ namespace Ankh.Solution
         /// <param name="visitor"></param>         
         public void VisitSelectedNodes( INodeVisitor visitor )         
         {
-            this.ForcePoll();
+            this.ForcePoll();     
+            IntPtr hItem = this.treeView.GetSelectedItem();
 
-            //foreach( SelectedItem item in items )         
-            object o = this.UIHierarchy.SelectedItems;         
-            foreach( UIHierarchyItem item in (Array)this.UIHierarchy.SelectedItems )         
-            {         
-                SolutionExplorerTreeNode node = this.GetNode( item );         
-                if ( node != null )         
-                    node.Accept( visitor );         
-            }         
+            SolutionExplorerTreeNode node = this.nodes[ hItem ] as SolutionExplorerTreeNode;
+            if ( node != null )
+            {
+                node.Accept( visitor );
+            }
         }
 
         
@@ -296,12 +289,12 @@ namespace Ankh.Solution
 
             ArrayList list = new ArrayList();
 
-            object o = this.UIHierarchy.SelectedItems;         
-            foreach( UIHierarchyItem item in (Array)this.UIHierarchy.SelectedItems )         
-            {         
-                SolutionExplorerTreeNode node = this.GetNode( item );         
-                if ( node != null )         
-                    node.GetResources( list, getChildItems, filter );         
+            IntPtr hItem = this.treeView.GetSelectedItem();
+
+            SolutionExplorerTreeNode node = this.nodes[hItem] as SolutionExplorerTreeNode;
+            if ( node != null )
+            {
+                node.GetResources( list, getChildItems, filter );
             }
 
             return list;
@@ -329,30 +322,29 @@ namespace Ankh.Solution
             return list;
         }
 
-        /// <summary>
-        /// Retrieves the resources associated with a project item.
-        /// </summary>
-        /// <param name="item"></param>
-        /// <param name="recursive"></param>
-        /// <returns></returns>
-        public IList GetItemResources( ProjectItem item, bool recursive )
-        {
-            this.ForcePoll();
+        ///// <summary>
+        ///// Retrieves the resources associated with a project item.
+        ///// </summary>
+        ///// <param name="item"></param>
+        ///// <param name="recursive"></param>
+        ///// <returns></returns>
+        //public IList GetItemResources( ProjectItem item, bool recursive )
+        //{
+        //    this.ForcePoll();
 
-            ArrayList list = new ArrayList();
+        //    ArrayList list = new ArrayList();
 
-            SolutionExplorerTreeNode node = this.GetNode(item);
-            if ( node != null )
-                node.GetResources( list, recursive, null );
+        //    SolutionExplorerTreeNode node = this.GetNode(item);
+        //    if ( node != null )
+        //        node.GetResources( list, recursive, null );
 
-            return list;
-        }
+        //    return list;
+        //}
 
         public ProjectItem GetSelectedProjectItem()
         {
-            Array array = (Array)this.UIHierarchy.SelectedItems;
-            UIHierarchyItem uiItem = (UIHierarchyItem)array.GetValue(0);
-            return uiItem.Object as ProjectItem;
+            IntPtr hItem = this.treeView.GetSelectedItem();
+            return this.nodes[ hItem ] as ProjectItem;
         }
 
        
@@ -529,7 +521,7 @@ namespace Ankh.Solution
                 Trace.WriteLine( "Could not set overlay image for the lockreadonly icon" );
 
         }
-        
+
 
         /// <summary>
         /// Adds a new resource to the tree.
@@ -537,16 +529,9 @@ namespace Ankh.Solution
         /// <param name="projectKey">The modeled ProjectItem or an unmodeled placeholder for it</param>
         /// <param name="parsedKey">A parsed item for unmodeled projects</param>
         /// <param name="node">Our own representation</param>
-        internal void AddResource( object projectKey, ParsedSolutionItem parsedKey, ProjectItemNode node )
+        internal void AddResource( object key, SolutionExplorerTreeNode node )
         {
-            if(projectKey!=null)
-            {
-                this.projectItems[projectKey] = node;
-            }
-            if(parsedKey!=null)
-            {
-                this.projectItems[parsedKey] = node;
-            }
+            this.nodes[ key ] = node;
         }
 
         /// <summary>
@@ -557,7 +542,7 @@ namespace Ankh.Solution
         /// <param name="projectFile">Filename for the project</param>
         internal void AddResource( object key, ProjectNode node, string projectFile )
         {
-            this.projects[key] = node;
+            this.nodes[key] = node;
             if ( projectFile != null && projectFile.Trim() != String.Empty )
             {
                 this.context.ProjectFileWatcher.AddFile( projectFile );
@@ -582,42 +567,42 @@ namespace Ankh.Solution
             this.solutionNode = (SolutionNode)node;
         }
 
-        private SolutionExplorerTreeNode GetNode(UIHierarchyItem item)
-        {
-            if ( item.Object == null || !this.context.AnkhLoadedForSolution )
-                return null;
+        //private SolutionExplorerTreeNode GetNode(UIHierarchyItem item)
+        //{
+        //    if ( item.Object == null || !this.context.AnkhLoadedForSolution )
+        //        return null;
 
-            if ( item == this.UIHierarchy.UIHierarchyItems.Item(1) )
-                return this.solutionNode;
-            else if ( this.projects.Contains(item.Object) )
-                return ((SolutionExplorerTreeNode)this.projects[item.Object]);
-            else if ( this.projectItems.Contains( item.Object ) )
-                return ((SolutionExplorerTreeNode)this.projectItems[item.Object]);
-            else
-                return null;
-        }
+        //    if ( item == this.UIHierarchy.UIHierarchyItems.Item(1) )
+        //        return this.solutionNode;
+        //    else if ( this.projects.Contains(item.Object) )
+        //        return ((SolutionExplorerTreeNode)this.projects[item.Object]);
+        //    else if ( this.projectItems.Contains( item.Object ) )
+        //        return ((SolutionExplorerTreeNode)this.projectItems[item.Object]);
+        //    else
+        //        return null;
+        //}
         
-        private SolutionExplorerTreeNode GetNode( ProjectItem item )
-        {
-            if ( item == null )
-                return null;
+        //private SolutionExplorerTreeNode GetNode( ProjectItem item )
+        //{
+        //    if ( item == null )
+        //        return null;
 
-            if (this.projectItems.Contains( item ) )
-                return ((SolutionExplorerTreeNode)this.projectItems[item]);
-            else
-                return null;
-        }
+        //    if (this.projectItems.Contains( item ) )
+        //        return ((SolutionExplorerTreeNode)this.projectItems[item]);
+        //    else
+        //        return null;
+        //}
 
-        private SolutionExplorerTreeNode GetNode( Project project )
-        {
-            if ( project == null )
-                return null;
+        //private SolutionExplorerTreeNode GetNode( Project project )
+        //{
+        //    if ( project == null )
+        //        return null;
 
-            if ( this.projects.Contains( project ) )
-                return ((SolutionExplorerTreeNode)this.projects[project]);
-            else
-                return null;
-        }
+        //    if ( this.projects.Contains( project ) )
+        //        return ((SolutionExplorerTreeNode)this.projects[project]);
+        //    else
+        //        return null;
+        //}
 
         /// <summary>
         /// Forces a poll of all project files.
@@ -1162,8 +1147,7 @@ namespace Ankh.Solution
         private const string UIHIERARCHY = "VsUIHierarchyBaseWin";
         private const string TREEVIEW = "SysTreeView32";
         private const string VBFLOATINGPALETTE = "VBFloatingPalette";
-        private IDictionary projectItems;
-        private IDictionary projects;
+        private Hashtable nodes;
         private SolutionNode solutionNode;
 
         private ImageList statusImageList;
@@ -1173,6 +1157,7 @@ namespace Ankh.Solution
 
         private bool refreshPending;
         private System.Threading.Timer timer;
+        private Hashtable projects;
         protected const int REFRESHDELAY = 800;
 
 
