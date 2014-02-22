@@ -62,7 +62,7 @@ namespace Ankh
         /// <param name="logmessage">text.</param>
         /// <returns></returns>
         /// <remarks>Precondition: Current solution is associated with a repository.</remarks>
-        bool TryGetIssues(string text, out IEnumerable<IssueMarker> issues);
+        bool TryGetIssues(string text, out IEnumerable<TextMarker> issues);
 
         /// <summary>
         /// Passes the open request to the current issue repository
@@ -70,6 +70,19 @@ namespace Ankh
         /// <param name="issueId"></param>
         void OpenIssue(string issueId);
 
-		void ShowConnectHelp();
-	}
+        /// <summary>
+        /// 
+        /// </summary>
+        void ShowConnectHelp();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="combined"></param>
+        /// <param name="markers"></param>
+        /// <returns></returns>
+        bool TryGetRevisions(string text, out IEnumerable<TextMarker> markers);
+
+        void OpenRevision(string revisionText);
+    }
 }

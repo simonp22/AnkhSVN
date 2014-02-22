@@ -95,7 +95,8 @@ namespace Ankh.Services
             tools.Add(new DiffTool(this, "TortoiseMerge", "TortoiseSVN TortoiseMerge",
                 RegistrySearch("SOFTWARE\\TortoiseSVN", "TMergePath")
                     ?? "$(HostProgramFiles)\\TortoiseSVN\\bin\\TortoiseMerge.exe",
-                "/base:'$(Base)' /mine:'$(Mine)' /basename:'$(BaseName)' /minename:'$(MineName)'", true));
+                "/base:'$(Base)' /mine:'$(Mine)' /basename:'$(BaseName)' /minename:'$(MineName)' " +
+                "$(ReadOnly?'/readonly')", true));
 
             tools.Add(new DiffTool(this, "AraxisMerge", "Araxis Merge",
                 RelativePath(
@@ -103,15 +104,15 @@ namespace Ankh.Services
                     AppIdLocalServerSearch("Merge70.Application") ??
                     ShellOpenSearch("Merge.Comparison.7"), "Compare.exe")
                         ?? "$(ProgramFiles)\\Araxis\\Araxis Merge\\Compare.exe",
-                "/wait /2 /title1:'$(BaseName)' /title2:'$(MineName)' '$(Base)' '$(Mine)'", true));
+                "/wait /2 /title1:'$(BaseName)' /title2:'$(MineName)' '$(Base)' '$(Mine)' " +
+                "$(ReadOnly?'/readonly')", true));
 
             tools.Add(new DiffTool(this, "DiffMerge", "SourceGear DiffMerge",
                 RegistrySearch("SOFTWARE\\SourceGear\\Common\\DiffMerge\\Installer", "Location")
                     ?? RegistrySearch("SOFTWARE\\SourceGear\\SourceGear DiffMerge", "Location")
                     ?? "$(ProgramFiles)\\SourceGear\\DiffMerge\\DiffMerge.exe",
                 "'$(Base)' '$(Mine)' /t1='$(BaseName)' /t2='$(MineName)' "
-                + "$(ReadOnly?'/ro2')"
-                , true));
+                + "$(ReadOnly?'/ro2')" , true));
 
             tools.Add(new DiffTool(this, "KDiff3", "KDiff3",
                 RegistrySearch("SOFTWARE\\KDiff3\\diff-ext", "diffcommand")
@@ -121,7 +122,7 @@ namespace Ankh.Services
             tools.Add(new DiffTool(this, "WinMerge", "WinMerge",
                 RegistrySearch("SOFTWARE\\Thingamahoochie\\WinMerge", "Executable")
                     ?? "$(ProgramFiles)\\WinMerge\\WinMergeU.exe",
-                "-e -u -wl $(ReadOnly?'-wr':'') -dl '$(BaseName)' -dr '$(MineName)' '$(base)' '$(mine)'", true));
+                "-e -u -wl$(ReadOnly?' -wr') -dl '$(BaseName)' -dr '$(MineName)' '$(base)' '$(mine)'", true));
 
             tools.Add(new DiffTool(this, "P4Merge", "Perforce Visual Merge",
                 Path.Combine((RegistrySearch("SOFTWARE\\Perforce\\Environment", "P4INSTROOT")
@@ -189,7 +190,8 @@ namespace Ankh.Services
                     ?? "$(HostProgramFiles)\\TortoiseSVN\\bin\\TortoiseMerge.exe",
                 "/base:'$(Base)' /theirs:'$(Theirs)' /mine:'$(Mine)' /merged:'$(Merged)' " +
                 "/basename:'$(BaseName)' /theirsname:'$(TheirsName)' /minename:'$(MineName)' "+
-                "/mergedname:'$(MergedName)'", true));
+                "/mergedname:'$(MergedName)' " +
+                "$(ReadOnly?'/readonly')", true));
 
             tools.Add(new DiffTool(this, "AraxisMerge", "Araxis Merge",
                 RelativePath(
@@ -198,14 +200,17 @@ namespace Ankh.Services
                     ShellOpenSearch("Merge.Comparison.7"), "Compare.exe")
                         ?? "$(ProgramFiles)\\Araxis\\Araxis Merge\\Compare.exe",
                 "/wait /a2 /3 /title1:'$(MineName)' /title2:'$(MergedName)' " +
-                    "/title3:'$(MineName)' '$(Mine)' '$(Base)' '$(Theirs)' '$(Merged)'", true));
+                "/title3:'$(MineName)' '$(Mine)' '$(Base)' '$(Theirs)' '$(Merged)' " +
+                "$(ReadOnly?'/readonly')", true));
 
             tools.Add(new DiffTool(this, "DiffMerge", "SourceGear DiffMerge",
                 RegistrySearch("SOFTWARE\\SourceGear\\Common\\DiffMerge\\Installer", "Location")
                     ?? RegistrySearch("SOFTWARE\\SourceGear\\SourceGear DiffMerge", "Location")
                     ?? "$(ProgramFiles)\\SourceGear\\DiffMerge\\DiffMerge.exe",
                 "/m /r='$(Merged)' '$(Mine)' '$(Base)' '$(Theirs)' " +
-                    "/t1='$(MineName)' /t2='$(MergedName)' /t3='$(TheirName)'", true));
+                    "/t1='$(MineName)' /t2='$(MergedName)' /t3='$(TheirName)' " +
+                    "$(ReadOnly?'/ro2') " +
+                    "$(ResolveConflictOn='0')", true));
 
             tools.Add(new DiffTool(this, "KDiff3", "KDiff3",
                 RegistrySearch("SOFTWARE\\KDiff3\\diff-ext", "diffcommand")
@@ -230,7 +235,8 @@ namespace Ankh.Services
                     ?? "$(ProgramFiles)\\Beyond Compare 3\\BComp.exe",
                 "'$(Mine)' '$(Theirs)' '$(Base)' '$(Merged)' " +
                 "/title1='$(MineName)' /title2='$(TheirsName)' " +
-                "/title3='$(BaseName)' /title4='$(MergedName)' ", true));
+                "/title3='$(BaseName)' /title4='$(MergedName)' " +
+                "$(ResolveConflictOn='0')", true));
 
             tools.Add(new DiffTool(this, "BeyondCompare2W", "Beyond Compare (2-Way)",
                 RelativePath(ShellOpenSearch("BeyondCompare.Snapshot"), "BComp.exe")
@@ -256,7 +262,8 @@ namespace Ankh.Services
                     ?? SubPath(RegistrySearch("SOFTWARE\\Devart\\CodeCompare", "HelpFile"), "CodeMerge.exe")
                     ?? "$(HostProgramFiles)\\Devart\\Code Compare\\CodeMerge.exe",
                 "/WAIT /SC=SVN /REMOVEFILES '/BF=$(Base)' '/MF=$(Mine)' '/MT=$(MineName)' " +
-                "'/TF=$(Theirs)' '/TT=$(TheirsName)' '/RF=$(Merged)'", true));
+                "'/TF=$(Theirs)' '/TT=$(TheirsName)' '/RF=$(Merged)' " +
+                "$(ResolveConflictOn='0')", true));
 
             tools.Add(new DiffTool(this, "SemanticMerge", "Semanticmerge",
                 SubPath(RegistrySearch("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\SemanticMerge", "InstallLocation")

@@ -17,8 +17,8 @@ namespace Ankh.UI.PendingChanges.Commands
     /// Command to open an identified issue in Log Message view, or on a Log entry
     /// </summary>
     [SvnCommand(AnkhCommand.PcLogEditorOpenIssue)]
-    [SvnCommand(AnkhCommand.LogOpenIssue)]
-    public class OpenIssue : ICommandHandler
+    [SvnCommand(AnkhCommand.PcLogEditorOpenRevision)]
+    sealed class OpenIssue : ICommandHandler
     {
         IAnkhIssueService _issueService;
 
@@ -46,7 +46,7 @@ namespace Ankh.UI.PendingChanges.Commands
 
         #region ICommandHandler Members
 
-        bool TryGetIssue(BaseCommandEventArgs e, out IssueMarker value)
+        bool TryGetMarker(BaseCommandEventArgs e, bool issue, out TextMarker value)
         {
             value = null;
             IVsTextView tv = ((ISelectionContextEx)e.Selection).ActiveFrameTextView;
@@ -91,38 +91,26 @@ namespace Ankh.UI.PendingChanges.Commands
 
             if (!string.IsNullOrEmpty(post))
                 combined += '\n' + post;
-            if ((y > 0) && !VSErr.Succeeded(tv.GetTextStream(y - 1, 0, y, 0, out pre)))
-                return false;
-
-            if (!VSErr.Succeeded(tv.GetTextStream(y + 1, 0, y + 2, 0, out post)))
-                post = null;
-
-            
-            if (!string.IsNullOrEmpty(pre))
-            {
-                combined = pre.TrimEnd('\r', '\n') + '\n';
-                start = combined.Length;
-            }
-
-            combined += text;
-
-            if (!string.IsNullOrEmpty(post))
-            {
-                post = post.TrimEnd('\r', '\n');
-                combined += '\n' + post;
-            }
 
             if (_issueService == null)
                 _issueService = e.GetService<IAnkhIssueService>();
 
-            IEnumerable<IssueMarker> markers;
+            IEnumerable<TextMarker> markers;
 
             int posToCheck = x + start;
 
-            if (!_issueService.TryGetIssues(combined, out markers))
-                return false;
+            if (issue)
+            {
+                if (!_issueService.TryGetIssues(combined, out markers))
+                    return false;
+            }
+            else
+            {
+                if (!_issueService.TryGetRevisions(combined, out markers))
+                    return false;
+            }
 
-            foreach (IssueMarker im in markers)
+            foreach (TextMarker im in markers)
             {
                 if (im.Index > posToCheck)
                     break;
@@ -139,25 +127,9 @@ namespace Ankh.UI.PendingChanges.Commands
 
         public void OnUpdate(CommandUpdateEventArgs e)
         {
-            switch (e.Command)
-            {
-                case AnkhCommand.PcLogEditorOpenIssue:
-                    {
-                        IssueMarker im;
-                        if (!TryGetIssue(e, out im))
-                            e.Enabled = false;
-                    }
-                    break;
-                case AnkhCommand.LogOpenIssue:
-                    {
-                        ISvnLogItem item = EnumTools.GetSingle(e.Selection.GetSelection<ISvnLogItem>());
-                        if (item == null)
-                            e.Enabled = false;
-                        else if (EnumTools.IsEmpty(item.Issues))
-                            e.Enabled = false;
-                    }
-                    break;
-            }
+            TextMarker im;
+            if (!TryGetMarker(e, (e.Command == AnkhCommand.PcLogEditorOpenIssue), out im))
+                e.Enabled = false;
         }
 
         public void OnExecute(CommandEventArgs e)
@@ -168,41 +140,20 @@ namespace Ankh.UI.PendingChanges.Commands
             if (_issueService == null)
                 return;
 
+            TextMarker marker;
+
             switch (e.Command)
             {
-                case AnkhCommand.LogOpenIssue:
-                    {
-                        ISvnLogItem selectedLog = EnumTools.GetSingle(e.Selection.GetSelection<ISvnLogItem>());
-                        if (selectedLog == null)
-                            return;
-
-                        string issueid = null;
-                        IEnumerable<IssueMarker> issues = selectedLog.Issues;
-                        if (!EnumTools.IsEmpty<IssueMarker>(issues))
-                        {
-                            using (Ankh.UI.IssueTracker.IssueSelector dlg = new Ankh.UI.IssueTracker.IssueSelector())
-                            {
-                                dlg.Context = e.Context;
-                                dlg.LoadIssues(issues);
-                                if (!dlg.IsSingleIssue(out issueid))
-                                {
-                                    if (dlg.ShowDialog(e.Context) == System.Windows.Forms.DialogResult.OK)
-                                    {
-                                        issueid = dlg.SelectedIssue;
-                                    }
-                                }
-                            }
-                        }
-                        if (!string.IsNullOrEmpty(issueid)) { _issueService.OpenIssue(issueid); }
-                    }
-
-                    break;
                 case AnkhCommand.PcLogEditorOpenIssue:
-                    IssueMarker marker;
-
-                    if (TryGetIssue(e, out marker))
+                    if (TryGetMarker(e, true, out marker))
                     {
                         _issueService.OpenIssue(marker.Value);
+                    }
+                    break;
+                case AnkhCommand.PcLogEditorOpenRevision:
+                    if (TryGetMarker(e, false, out marker))
+                    {
+                        _issueService.OpenRevision(marker.Value);
                     }
                     break;
             }

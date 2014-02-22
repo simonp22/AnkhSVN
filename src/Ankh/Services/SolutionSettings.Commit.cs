@@ -60,6 +60,39 @@ namespace Ankh.Settings
             return null;
         }
 
+        public Uri GetRevisionUri(string revisionText)
+        {
+            if (revisionText == null)
+                throw new ArgumentNullException("revisionText");
+
+            if (string.IsNullOrEmpty(revisionText))
+                return null;
+
+            RefreshIfDirty();
+            SettingsCache cache = _cache;
+
+            if (cache == null || cache.RevisionUrl == null)
+                return null;
+
+            string url = cache.RevisionUrl.Replace("%REVISION%", Uri.EscapeDataString(revisionText));
+
+            if (url.StartsWith("^/"))
+            {
+                Uri repositoryRoot = RepositoryRoot;
+
+                if (repositoryRoot == null)
+                    return null;
+
+                url = repositoryRoot.AbsoluteUri + url.Substring(2);
+            }
+
+            Uri result;
+            if (Uri.TryCreate(url, UriKind.Absolute, out result))
+                return result;
+
+            return null;
+        }
+
         public string RawIssueTrackerUri
         {
             get
@@ -114,9 +147,7 @@ namespace Ankh.Settings
             {
                 RefreshIfDirty();
 
-                if (!string.IsNullOrEmpty(_cache.BugTrackLogRegexes))
-                    return false; // Has higher priority
-                else if (!string.IsNullOrEmpty(_cache.BugTrackMessage))
+                if (!string.IsNullOrEmpty(_cache.BugTrackMessage))
                     return true;
 
                 return false;
@@ -147,21 +178,21 @@ namespace Ankh.Settings
                 if(!string.IsNullOrEmpty(_cache.BugTrackLogRegexes))
                     foreach (String s in _cache.BugTrackLogRegexes.Split('\n'))
                     {
-                        rl.Add(s.TrimEnd('\r'));
+                        rl.Add(s.TrimEnd('\r').Trim());
                     }
 
                 return _cache.LogRegexes = rl.AsReadOnly();
             }
         }
 
-        public IEnumerable<IssueMarker> GetIssues(string logmessage)
+        public IEnumerable<TextMarker> GetIssues(string logmessage)
         {
             ReadOnlyCollection<string> items = RawLogIssueRegexes;
 
             SettingsCache sc = _cache;
 
-            if (_cache.BrokenRegex)
-                return new IssueMarker[0];
+            if (sc.BrokenRegex)
+                return new TextMarker[0];
 
             if (sc.AllInOneRe == null && sc.LogPrepareRe == null && items != null)
                 try
@@ -191,10 +222,29 @@ namespace Ankh.Settings
                 return PerformSplit(sc, logmessage);
 
             sc.BrokenRegex = true;
-            return new IssueMarker[0];
+            return new TextMarker[0];
+        }
+        
+        const string defaultRevisionRegex = @"\b(r\d+)|(rev(ision)?(s|\(s\))?\s+\d+(\s*(,|and)\s*\d+)*)\b";
+        public IEnumerable<TextMarker> GetRevisions(string text)
+        {
+            SettingsCache sc = _cache;
+
+            if (sc.RevisionRe == null && !string.IsNullOrEmpty(sc.RevisionRegex))
+                try
+                {
+                    sc.RevisionRe = new Regex(sc.RevisionRegex.Trim(), RegexOptions.CultureInvariant | RegexOptions.Multiline);
+                }
+                catch (ArgumentException)
+                {}
+
+            if (sc.RevisionRe == null)
+                sc.RevisionRe = new Regex(defaultRevisionRegex, RegexOptions.CultureInvariant | RegexOptions.Multiline | RegexOptions.Compiled);
+
+            return PerformRevisionScan(sc, text);
         }
 
-        private IEnumerable<IssueMarker> PerformAllInOne(SettingsCache sc, string logmessage)
+        private IEnumerable<TextMarker> PerformAllInOne(SettingsCache sc, string logmessage)
         {
             foreach (Match m in sc.AllInOneRe.Matches(logmessage))
             {
@@ -208,12 +258,12 @@ namespace Ankh.Settings
                         first = false;
                     else
                         foreach (Capture c in g.Captures)
-                            yield return new IssueMarker(c.Index, c.Length, c.Value);
+                            yield return new TextMarker(c.Index, c.Length, c.Value);
                 }
             }
         }
 
-        private IEnumerable<IssueMarker> PerformSplit(SettingsCache cache, string logmessage)
+        private IEnumerable<TextMarker> PerformSplit(SettingsCache cache, string logmessage)
         {
             foreach (Match m in cache.LogPrepareRe.Matches(logmessage))
             {
@@ -231,7 +281,36 @@ namespace Ankh.Settings
 
                         foreach (Capture sc in sm.Captures)
                         {
-                            yield return new IssueMarker(c.Index + sc.Index, sc.Length, sc.Value);
+                            yield return new TextMarker(c.Index + sc.Index, sc.Length, sc.Value);
+                        }
+                    }
+                }
+            }
+        }
+
+        static Regex _revRe;
+        private IEnumerable<TextMarker> PerformRevisionScan(SettingsCache cache, string logmessage)
+        {
+            if (_revRe == null)
+                _revRe = new Regex(@"\d+", RegexOptions.Multiline | RegexOptions.CultureInvariant);
+
+            foreach (Match m in cache.RevisionRe.Matches(logmessage))
+            {
+                if (!m.Success)
+                    continue;
+
+                foreach (Capture c in m.Captures)
+                {
+                    string text = logmessage.Substring(c.Index, c.Length);
+
+                    foreach (Match sm in _revRe.Matches(c.Value))
+                    {
+                        if (!sm.Success)
+                            continue;
+
+                        foreach (Capture sc in sm.Captures)
+                        {
+                            yield return new TextMarker(c.Index + sc.Index, sc.Length, sc.Value);
                         }
                     }
                 }

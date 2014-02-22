@@ -231,31 +231,31 @@
   <data name="&gt;&gt;okButton.ZOrder" xml:space="preserve">
     <value>2</value>
   </data>
-  <data name="button2.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
+  <data name="showStackTraceBtn.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left</value>
   </data>
-  <data name="button2.Location" type="System.Drawing.Point, System.Drawing">
+  <data name="showStackTraceBtn.Location" type="System.Drawing.Point, System.Drawing">
     <value>12, 179</value>
   </data>
-  <data name="button2.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="showStackTraceBtn.Size" type="System.Drawing.Size, System.Drawing">
     <value>75, 23</value>
   </data>
-  <data name="button2.TabIndex" type="System.Int32, mscorlib">
+  <data name="showStackTraceBtn.TabIndex" type="System.Int32, mscorlib">
     <value>1</value>
   </data>
-  <data name="button2.Text" xml:space="preserve">
+  <data name="showStackTraceBtn.Text" xml:space="preserve">
     <value>&amp;Stack trace</value>
   </data>
-  <data name="&gt;&gt;button2.Name" xml:space="preserve">
-    <value>button2</value>
+  <data name="&gt;&gt;showStackTraceBtn.Name" xml:space="preserve">
+    <value>showStackTraceBtn</value>
   </data>
-  <data name="&gt;&gt;button2.Type" xml:space="preserve">
+  <data name="&gt;&gt;showStackTraceBtn.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;button2.Parent" xml:space="preserve">
+  <data name="&gt;&gt;showStackTraceBtn.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
-  <data name="&gt;&gt;button2.ZOrder" xml:space="preserve">
+  <data name="&gt;&gt;showStackTraceBtn.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
   <data name="errorReportButton.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
@@ -352,6 +352,6 @@
     <value>ErrorDialog</value>
   </data>
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
-    <value>Ankh.UI.VSDialogForm, Ankh.Services, Version=2.2.3790.25433, Culture=neutral, PublicKeyToken=a8604ba8fc87eddd</value>
+    <value>Ankh.UI.VSDialogForm, Ankh.Services, Version=2.5.5094.32028, Culture=neutral, PublicKeyToken=a8604ba8fc87eddd</value>
   </data>
 </root>

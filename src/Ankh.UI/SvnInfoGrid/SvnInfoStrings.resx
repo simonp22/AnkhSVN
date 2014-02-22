@@ -120,4 +120,7 @@
   <data name="NrOfFileInfo" xml:space="preserve">
     <value>&lt;{0} files&gt;</value>
   </data>
+  <data name="NrOfFilesBelow" xml:space="preserve">
+    <value>&lt;{0} files below '{1}'&gt;</value>
+  </data>
 </root>

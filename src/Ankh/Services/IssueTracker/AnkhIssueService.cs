@@ -36,11 +36,16 @@ namespace Ankh.Services.IssueTracker
 
         private Dictionary<string, IssueRepositoryConnector> _nameConnectorMap;
         private IssueRepository _repository;
-        private Regex _issueIdRegex;
+        IProjectCommitSettings _commitSettings;
 
         public AnkhIssueService(IAnkhServiceProvider context)
             : base(context)
         {
+        }
+
+        IProjectCommitSettings CommitSettings
+        {
+            get { return _commitSettings ?? (_commitSettings = GetService<IProjectCommitSettings>()); }
         }
 
         #region IAnkhIssueService Members
@@ -130,44 +135,37 @@ namespace Ankh.Services.IssueTracker
         /// Gets the issue references from the specified text
         /// </summary>
         /// <param name="text"></param>
-        /// <param name="issues"></param>
+        /// <param name="markers"></param>
         /// <returns></returns>
-        public bool TryGetIssues(string text, out IEnumerable<IssueMarker> issues)
+        public bool TryGetIssues(string text, out IEnumerable<TextMarker> markers)
         {
-            if (!string.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text))
             {
-                // potentially triggers 
-                // Issue Tracker Connector Package initialization
-                IssueRepository repository = CurrentIssueRepository;
-                if (repository != null)
-                {
-                    if (_issueIdRegex == null)
-                    {
-                        string pattern = repository.IssueIdPattern;
-                        if (!string.IsNullOrEmpty(pattern))
-                        {
-                            _issueIdRegex = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.Multiline);
-                        }
-                    }
-                    if (_issueIdRegex != null)
-                    {
-                        issues = PerformRegex(text);
-                        return true;
-                    }
-                }
-                else if (GetService<IProjectCommitSettings>() != null)
-                {
-                    issues = GetIssuesFromCommitSettings(text);
-                    return true;
-                }
+                markers = null;
+                return false;
             }
-            // meaning 
-            // no solution
-            // or no issue repository is associated with the solution
-            // or issue repository does not provide an issue id pattern
-            // or text is empty
-            issues = new IssueMarker[0];
-            return false;
+
+            // potentially triggers 
+            // Issue Tracker Connector Package initialization
+            IssueRepository repository = CurrentIssueRepository;
+            if (repository != null)
+                markers = PerformRepositoryRegex(repository.IssueIdRegex, text);
+            else
+                markers = GetIssuesFromCommitSettings(text);
+
+            return true;
+        }
+
+        public bool TryGetRevisions(string text, out IEnumerable<TextMarker> markers)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                markers = null;
+                return false;
+            }
+
+            markers = GetRevisionsFromCommitSettings(text);
+            return true;
         }
 
         /// <summary>
@@ -186,22 +184,47 @@ namespace Ankh.Services.IssueTracker
                 try
                 {
                     repository.NavigateTo(issueId);
+                    return;
                 }
                 catch { } // connector code
             }
-            else
+
+            IAnkhWebBrowser web = GetService<IAnkhWebBrowser>();
+            if (web != null)
             {
-                IProjectCommitSettings projectSettings = GetService<IProjectCommitSettings>();
-                if (projectSettings != null)
+                Uri uri = CommitSettings.GetIssueTrackerUri(issueId);
+
+                if (uri != null && !uri.IsFile && !uri.IsUnc)
+                    web.Navigate(uri);
+            }
+        }
+
+        public void OpenRevision(string revisionText)
+        {
+            if (string.IsNullOrEmpty(revisionText))
+                throw new ArgumentNullException("revisionText");
+
+            long rev;
+
+            IssueRepository repository = CurrentIssueRepository;
+            if (repository != null
+                && repository.CanNavigateToRevision
+                && long.TryParse(revisionText, out rev))
+            {
+                try
                 {
-                    IAnkhWebBrowser web = GetService<IAnkhWebBrowser>();
-                    if (web != null)
-                    {
-                        Uri uri = projectSettings.GetIssueTrackerUri(issueId);
-                        if (uri != null && !uri.IsFile && !uri.IsUnc)
-                            web.Navigate(uri);
-                    }
+                    repository.NavigateToRevision(rev);
+                    return;
                 }
+                catch { } // connector code
+            }
+
+            IAnkhWebBrowser web = GetService<IAnkhWebBrowser>();
+            if (web != null)
+            {
+                Uri uri = CommitSettings.GetRevisionUri(revisionText);
+                if (uri != null && !uri.IsFile && !uri.IsUnc)
+                    web.Navigate(uri);
             }
         }
 
@@ -241,7 +264,6 @@ namespace Ankh.Services.IssueTracker
             {
                 IssueRepository oldRepository = _repository;
                 _repository = value;
-                _issueIdRegex = null; // reset RegEx
                 OnIssueRepositoryChanged();
                 if (oldRepository != null && oldRepository != _repository)
                 {
@@ -296,9 +318,12 @@ namespace Ankh.Services.IssueTracker
 
         #endregion
 
-        private IEnumerable<IssueMarker> PerformRegex(string text)
+        private IEnumerable<TextMarker> PerformRepositoryRegex(Regex re, string text)
         {
-            foreach (Match m in _issueIdRegex.Matches(text))
+            if (re == null)
+                yield break;
+            
+            foreach (Match m in re.Matches(text))
             {
                 if (!m.Success)
                     continue;
@@ -308,14 +333,14 @@ namespace Ankh.Services.IssueTracker
                 if (grp != null && grp.Success)
                 {
                     foreach (Capture c in grp.Captures)
-                        yield return new IssueMarker(c.Index, c.Length, c.Value);
+                        yield return new TextMarker(c.Index, c.Length, c.Value);
                 }
                 else
                 {
                     foreach (Group g in m.Groups)
                     {
                         foreach (Capture c in g.Captures)
-                            yield return new IssueMarker(c.Index, c.Length, c.Value);
+                            yield return new TextMarker(c.Index, c.Length, c.Value);
                     }
                 }
             }
@@ -324,11 +349,28 @@ namespace Ankh.Services.IssueTracker
         /// <summary>
         /// Gets issue ids from project commit settings
         /// </summary>
-        private IEnumerable<IssueMarker> GetIssuesFromCommitSettings(string text)
+        private IEnumerable<TextMarker> GetIssuesFromCommitSettings(string text)
         {
-            foreach (IssueMarker issue in GetService<IProjectCommitSettings>().GetIssues(text))
+            if (CommitSettings == null)
+                yield break;
+
+            foreach (TextMarker issue in CommitSettings.GetIssues(text))
             {
                 yield return issue;
+            }
+        }
+
+        /// <summary>
+        /// Gets issue ids from project commit settings
+        /// </summary>
+        private IEnumerable<TextMarker> GetRevisionsFromCommitSettings(string text)
+        {
+            if (CommitSettings == null)
+                yield break;
+
+            foreach (TextMarker rev in CommitSettings.GetRevisions(text))
+            {
+                yield return rev;
             }
         }
 
@@ -352,7 +394,7 @@ namespace Ankh.Services.IssueTracker
             }
         }
 
-		IIssueTrackerSettings _settings;
+        IIssueTrackerSettings _settings;
         private IIssueTrackerSettings Settings
         {
             get { return _settings ?? (_settings = GetService<IIssueTrackerSettings>()); }
@@ -386,37 +428,37 @@ namespace Ankh.Services.IssueTracker
             }
         }
 
-		#region IAnkhIssueService Members
+        #region IAnkhIssueService Members
 
 
-		public void ShowConnectHelp()
-		{
-			// Shamelessly copied from the AnkhHelService
+        public void ShowConnectHelp()
+        {
+            // Shamelessly copied from the AnkhHelService
 
-			UriBuilder ub = new UriBuilder("http://svc.ankhsvn.net/svc/go/");
-			ub.Query = string.Format("t=ctrlHelp&v={0}&l={1}&dt={2}", GetService<IAnkhPackage>().UIVersion, CultureInfo.CurrentUICulture.LCID, Uri.EscapeUriString("Ankh.UI.PendingChanges.PendingIssuesPage"));
+            UriBuilder ub = new UriBuilder("http://svc.ankhsvn.net/svc/go/");
+            ub.Query = string.Format("t=ctrlHelp&v={0}&l={1}&dt={2}", GetService<IAnkhPackage>().UIVersion, CultureInfo.CurrentUICulture.LCID, Uri.EscapeUriString("Ankh.UI.PendingChanges.PendingIssuesPage"));
 
-			try
-			{
-				bool showHelpInBrowser = true;
-				IVsHelpSystem help = GetService<IVsHelpSystem>(typeof(SVsHelpService));
-				if (help != null)
-					showHelpInBrowser = !VSErr.Succeeded(help.DisplayTopicFromURL(ub.Uri.AbsoluteUri, (uint)VHS_COMMAND.VHS_Default));
+            try
+            {
+                bool showHelpInBrowser = true;
+                IVsHelpSystem help = GetService<IVsHelpSystem>(typeof(SVsHelpService));
+                if (help != null)
+                    showHelpInBrowser = !VSErr.Succeeded(help.DisplayTopicFromURL(ub.Uri.AbsoluteUri, (uint)VHS_COMMAND.VHS_Default));
 
-				if (showHelpInBrowser)
-					Help.ShowHelp(null, ub.Uri.AbsoluteUri);
-			}
-			catch (Exception ex)
-			{
-				IAnkhErrorHandler eh = GetService<IAnkhErrorHandler>();
+                if (showHelpInBrowser)
+                    Help.ShowHelp(null, ub.Uri.AbsoluteUri);
+            }
+            catch (Exception ex)
+            {
+                IAnkhErrorHandler eh = GetService<IAnkhErrorHandler>();
 
-				if (eh != null && eh.IsEnabled(ex))
-					eh.OnError(ex);
-				else
-					throw;
-			}
-		}
+                if (eh != null && eh.IsEnabled(ex))
+                    eh.OnError(ex);
+                else
+                    throw;
+            }
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

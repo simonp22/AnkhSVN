@@ -22,7 +22,7 @@ namespace Ankh.ExtensionPoints.IssueTracker
     /// <summary>
     /// 
     /// </summary>
-    public abstract class CommitArgs
+    public abstract class CommitArgs : EventArgs
     {
         private readonly ICollection<Uri> _paths;
         private readonly long _revision;
@@ -77,6 +77,9 @@ namespace Ankh.ExtensionPoints.IssueTracker
     public sealed class PreCommitArgs : CommitArgs
     {
         bool _cancel;
+        string _issueText;
+        bool _skipIssueVerify;
+        SortedDictionary<string, string> _revProps;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PreCommitArgs"/> class.
@@ -117,6 +120,33 @@ namespace Ankh.ExtensionPoints.IssueTracker
         {
             get { return InternalCommitMessage; }
             set { InternalCommitMessage = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the issuetext (as set in the issue box)
+        /// </summary>
+        public string IssueText
+        {
+            get { return _issueText; }
+            set { _issueText = value;  }
+        }
+
+        /// <summary>
+        /// Gets or sets a boolean that indicates whether the commit message and
+        /// issuetext should be verified (or not)
+        /// </summary>
+        public bool SkipIssueVerify
+        {
+            get { return _skipIssueVerify; }
+            set { _skipIssueVerify = value; }
+        }
+
+        /// <summary>
+        /// Gets a dictionary of custom revision properties to set while committing
+        /// </summary>
+        public IDictionary<string, string> CustomProperties
+        {
+            get { return _revProps ?? (_revProps = new SortedDictionary<string, string>()); }
         }
     }
 

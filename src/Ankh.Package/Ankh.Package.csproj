@@ -41,16 +41,6 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release %28With MSI%29|x86'">
-    <OutputPath>bin\Release %28With MSI%29\</OutputPath>
-    <DefineConstants>FOR_MSI</DefineConstants>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
   <PropertyGroup>
     <RegisterOutputPackage>true</RegisterOutputPackage>
     <RegisterWithCodebase>true</RegisterWithCodebase>
@@ -553,10 +543,9 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\VSSDK\Microsoft.VsSDK.targets" Condition="$(VisualStudioVersion) &gt;= '10.0'" />
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v9.0\VSSDK\Microsoft.VsSDK.targets" Condition="$(VisualStudioVersion) == '9.0'" />
-  <Import Project="..\tools\VSSdk2005Tasks\VS9.0-fixes.targets" Condition="$(VisualStudioVersion) == '9.0'" />
-  <Import Project="..\tools\VSSdk2005Tasks\Microsoft.VsSDK.targets" Condition="$(VisualStudioVersion) == '8.0'" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(ImportVsSdkVersion)\VSSDK\Microsoft.VsSDK.targets" Condition="$(ImportVsSdkVersion) != '8.0'" />
+  <Import Project="..\tools\VSSdk2005Tasks\VS9.0-fixes.targets" Condition="$(ImportVsSdkVersion) == '9.0'" />
+  <Import Project="..\tools\VSSdk2005Tasks\Microsoft.VsSDK.targets" Condition="$(ImportVsSdkVersion) == '8.0'" />
   <Import Project="..\tools\turtletasks\QQn.TurtleTasks.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

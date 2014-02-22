@@ -16,6 +16,7 @@
 
 using System;
 using System.Diagnostics;
+using Ankh.Configuration;
 using Microsoft.VisualStudio.Shell.Interop;
 
 namespace Ankh.VS.WebBrowser
@@ -30,14 +31,20 @@ namespace Ankh.VS.WebBrowser
 
         public void Navigate(Uri url)
         {
-            AnkhBrowserResults results;
-            Navigate(url, new AnkhBrowserArgs(), out results);
+            Navigate(url, new AnkhBrowserArgs());
         }
 
         public void Navigate(Uri url, AnkhBrowserArgs args)
         {
             AnkhBrowserResults results;
-            if (args != null && args.External)
+
+            bool useExternal = args.External;
+
+            IAnkhConfigurationService cs = GetService<IAnkhConfigurationService>();
+            if (cs != null && cs.Instance.ForceExternalBrowser)
+                useExternal = true;
+
+            if (args != null && useExternal)
             {
                 try
                 {
