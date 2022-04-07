@@ -1,3 +1,22 @@
+Now been picked back up by the original developers, please go there instead
+
+https://github.com/AmpScm/AnkhSVN
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           AnkhSVN - Subversion support for Visual Studio
           ==============================================
 
